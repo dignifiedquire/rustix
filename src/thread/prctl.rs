@@ -174,6 +174,61 @@ pub fn set_secure_computing_mode(mode: SecureComputingMode) -> io::Result<()> {
     unsafe { prctl_2args(PR_SET_SECCOMP, mode as usize as *mut _) }.map(|_r| ())
 }
 
+/// One classic-BPF instruction (`struct sock_filter`) — the unit of a seccomp
+/// filter program. Build a `&[SeccompFilterInsn]` and install it with
+/// [`set_seccomp_filter`].
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct SeccompFilterInsn {
+    /// Operation (BPF opcode).
+    pub code: u16,
+    /// Jump offset taken when the test is true.
+    pub jt: u8,
+    /// Jump offset taken when the test is false.
+    pub jf: u8,
+    /// Generic multiuse field (immediate operand / return value).
+    pub k: u32,
+}
+
+/// `struct sock_fprog` — the `(len, filter*)` header the kernel reads.
+#[repr(C)]
+struct SockFprog {
+    len: u16,
+    filter: *const SeccompFilterInsn,
+}
+
+/// Install a classic-BPF seccomp filter on the calling thread
+/// (`SECCOMP_MODE_FILTER`), limiting the available system calls.
+///
+/// The caller must first enable no-new-privs (see [`set_no_new_privs`]) or hold
+/// `CAP_SYS_ADMIN`, otherwise this fails with `EACCES`. The filter is evaluated on
+/// every subsequent syscall, is inherited across `fork` and `execve`, and cannot
+/// be removed.
+///
+/// # References
+///  - [`prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER,…)`]
+///  - [`seccomp(2)`]
+///
+/// [`prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER,…)`]: https://man7.org/linux/man-pages/man2/prctl.2.html
+/// [`seccomp(2)`]: https://man7.org/linux/man-pages/man2/seccomp.2.html
+#[inline]
+pub fn set_seccomp_filter(filter: &[SeccompFilterInsn]) -> io::Result<()> {
+    let prog = SockFprog {
+        len: filter.len() as u16,
+        filter: filter.as_ptr(),
+    };
+    // The kernel copies the program during the call, so `prog` (and the slice it
+    // borrows) only needs to be valid for the duration of this syscall.
+    unsafe {
+        prctl_3args(
+            PR_SET_SECCOMP,
+            SECCOMP_MODE_FILTER as usize as *mut c_void,
+            (&prog as *const SockFprog) as *mut c_void,
+        )
+    }
+    .map(|_r| ())
+}
+
 //
 // PR_CAPBSET_READ/PR_CAPBSET_DROP
 //

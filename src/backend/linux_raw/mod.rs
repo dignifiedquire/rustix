@@ -43,6 +43,8 @@ pub(crate) mod fs;
 pub(crate) mod io;
 #[cfg(feature = "io_uring")]
 pub(crate) mod io_uring;
+#[cfg(feature = "landlock")]
+pub(crate) mod landlock;
 #[cfg(feature = "mm")]
 pub(crate) mod mm;
 #[cfg(feature = "mount")]

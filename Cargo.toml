@@ -161,6 +161,9 @@ mm = []
 # Enable `rustix::pipe::*`.
 pipe = []
 
+# Enable `rustix::landlock::*`. Linux-only (linux_raw backend), like `runtime`.
+landlock = ["linux-raw-sys/landlock"]
+
 # Enable `rustix::rand::*`.
 rand = []
 

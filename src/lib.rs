@@ -230,6 +230,12 @@ pub mod io;
 #[cfg_attr(docsrs, doc(cfg(feature = "io_uring")))]
 pub mod io_uring;
 pub mod ioctl;
+// "landlock" is Linux-only, so like "runtime" it's only available on the
+// linux_raw backend.
+#[cfg(feature = "landlock")]
+#[cfg(linux_raw)]
+#[cfg_attr(docsrs, doc(cfg(feature = "landlock")))]
+pub mod landlock;
 #[cfg(not(any(
     windows,
     target_os = "espidf",
