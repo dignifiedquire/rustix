@@ -19,3 +19,20 @@ bitflags! {
         const _ = !0;
     }
 }
+
+bitflags! {
+    /// `SFD_*` flags for use with [`signalfd`].
+    ///
+    /// [`signalfd`]: crate::event::signalfd
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+    pub struct SignalfdFlags: ffi::c_uint {
+        /// `SFD_CLOEXEC`
+        const CLOEXEC = linux_raw_sys::general::O_CLOEXEC as _;
+        /// `SFD_NONBLOCK`
+        const NONBLOCK = linux_raw_sys::general::O_NONBLOCK as _;
+
+        /// <https://docs.rs/bitflags/*/bitflags/#externally-defined-flags>
+        const _ = !0;
+    }
+}

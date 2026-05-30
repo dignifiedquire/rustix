@@ -18,6 +18,8 @@ mod poll;
 pub mod port;
 #[cfg(any(bsd, linux_kernel, windows, target_os = "wasi"))]
 mod select;
+#[cfg(linux_kernel)]
+mod signalfd;
 
 pub use crate::timespec::{Nsecs, Secs, Timespec};
 #[cfg(any(
@@ -32,3 +34,5 @@ pub use pause::*;
 pub use poll::{poll, PollFd, PollFlags};
 #[cfg(any(bsd, linux_kernel, windows, target_os = "wasi"))]
 pub use select::*;
+#[cfg(linux_kernel)]
+pub use signalfd::{signalfd, KernelSigSet, SignalfdFlags};

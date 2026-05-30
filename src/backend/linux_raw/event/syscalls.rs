@@ -9,9 +9,10 @@ use crate::backend::conv::{
     by_ref, c_int, c_uint, opt_mut, opt_ref, pass_usize, ret, ret_c_int, ret_error, ret_owned_fd,
     ret_usize, size_of, slice_mut, zero,
 };
-use crate::event::{epoll, EventfdFlags, FdSetElement, PollFd, Timespec};
+use crate::event::{epoll, EventfdFlags, FdSetElement, PollFd, SignalfdFlags, Timespec};
 use crate::fd::{BorrowedFd, OwnedFd};
 use crate::io;
+use crate::kernel_sigset::KernelSigSet;
 use core::ptr::null_mut;
 use linux_raw_sys::general::{kernel_sigset_t, EPOLL_CTL_ADD, EPOLL_CTL_DEL, EPOLL_CTL_MOD};
 
@@ -336,6 +337,19 @@ pub(crate) unsafe fn epoll_wait(
 #[inline]
 pub(crate) fn eventfd(initval: u32, flags: EventfdFlags) -> io::Result<OwnedFd> {
     unsafe { ret_owned_fd(syscall_readonly!(__NR_eventfd2, c_uint(initval), flags)) }
+}
+
+#[inline]
+pub(crate) fn signalfd(fd: i32, mask: &KernelSigSet, flags: SignalfdFlags) -> io::Result<OwnedFd> {
+    unsafe {
+        ret_owned_fd(syscall_readonly!(
+            __NR_signalfd4,
+            c_int(fd),
+            by_ref(mask),
+            size_of::<KernelSigSet, _>(),
+            flags
+        ))
+    }
 }
 
 #[inline]

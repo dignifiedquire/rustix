@@ -577,6 +577,14 @@ impl<'a, Num: ArgNumber> From<crate::event::EventfdFlags> for ArgReg<'a, Num> {
 }
 
 #[cfg(feature = "event")]
+impl<'a, Num: ArgNumber> From<crate::event::SignalfdFlags> for ArgReg<'a, Num> {
+    #[inline]
+    fn from(flags: crate::event::SignalfdFlags) -> Self {
+        c_uint(flags.bits())
+    }
+}
+
+#[cfg(feature = "event")]
 impl<'a, Num: ArgNumber> From<crate::event::epoll::CreateFlags> for ArgReg<'a, Num> {
     #[inline]
     fn from(flags: crate::event::epoll::CreateFlags) -> Self {

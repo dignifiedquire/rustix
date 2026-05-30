@@ -363,7 +363,7 @@ pub(crate) mod path;
 #[cfg(any(feature = "thread", feature = "time"))]
 mod clockid;
 #[cfg(linux_kernel)]
-#[cfg(any(feature = "io_uring", feature = "runtime"))]
+#[cfg(any(feature = "event", feature = "io_uring", feature = "runtime"))]
 mod kernel_sigset;
 #[cfg(not(any(windows, target_os = "wasi")))]
 #[cfg(any(
@@ -383,7 +383,8 @@ mod prctl;
     feature = "io_uring",
     feature = "process",
     feature = "runtime",
-    all(bsd, feature = "event")
+    all(bsd, feature = "event"),
+    all(linux_kernel, feature = "event"),
 ))]
 mod signal;
 #[cfg(any(

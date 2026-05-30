@@ -19,8 +19,12 @@ use crate::event::port::Event;
 use crate::event::EventfdFlags;
 #[cfg(any(bsd, linux_kernel, target_os = "wasi"))]
 use crate::event::FdSetElement;
+#[cfg(linux_kernel)]
+use crate::event::SignalfdFlags;
 use crate::event::{PollFd, Timespec};
 use crate::io;
+#[cfg(linux_kernel)]
+use crate::kernel_sigset::KernelSigSet;
 #[cfg(any(linux_kernel, target_os = "illumos", target_os = "redox"))]
 use crate::utils::as_ptr;
 #[cfg(solarish)]
@@ -83,6 +87,26 @@ pub(crate) fn eventfd(initval: u32, flags: EventfdFlags) -> io::Result<OwnedFd> 
     #[cfg(any(target_os = "illumos", target_os = "espidf"))]
     unsafe {
         ret_owned_fd(c::eventfd(initval, bitflags_bits!(flags)))
+    }
+}
+
+#[cfg(linux_kernel)]
+pub(crate) fn signalfd(fd: i32, mask: &KernelSigSet, flags: SignalfdFlags) -> io::Result<OwnedFd> {
+    unsafe {
+        syscall! {
+            fn signalfd4(
+                fd: c::c_int,
+                mask: *const KernelSigSet,
+                mask_size: c::size_t,
+                flags: c::c_int
+            ) via SYS_signalfd4 -> c::c_int
+        }
+        ret_owned_fd(signalfd4(
+            fd,
+            mask,
+            core::mem::size_of::<KernelSigSet>(),
+            bitflags_bits!(flags),
+        ))
     }
 }
 

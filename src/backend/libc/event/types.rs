@@ -1,11 +1,5 @@
 #[cfg(any(linux_kernel, target_os = "freebsd", target_os = "illumos"))]
 use crate::backend::c;
-#[cfg(any(
-    linux_kernel,
-    target_os = "freebsd",
-    target_os = "illumos",
-    target_os = "espidf"
-))]
 use bitflags::bitflags;
 
 #[cfg(any(
@@ -30,6 +24,24 @@ bitflags! {
         /// `EFD_SEMAPHORE`
         #[cfg(not(target_os = "espidf"))]
         const SEMAPHORE = bitcast!(c::EFD_SEMAPHORE);
+
+        /// <https://docs.rs/bitflags/*/bitflags/#externally-defined-flags>
+        const _ = !0;
+    }
+}
+
+#[cfg(linux_kernel)]
+bitflags! {
+    /// `SFD_*` flags for use with [`signalfd`].
+    ///
+    /// [`signalfd`]: crate::event::signalfd
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+    pub struct SignalfdFlags: u32 {
+        /// `SFD_CLOEXEC`
+        const CLOEXEC = bitcast!(c::SFD_CLOEXEC);
+        /// `SFD_NONBLOCK`
+        const NONBLOCK = bitcast!(c::SFD_NONBLOCK);
 
         /// <https://docs.rs/bitflags/*/bitflags/#externally-defined-flags>
         const _ = !0;
