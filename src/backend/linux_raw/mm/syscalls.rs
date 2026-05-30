@@ -8,14 +8,15 @@
 
 use super::types::{
     Advice, MapFlags, MlockAllFlags, MlockFlags, MprotectFlags, MremapFlags, MsyncFlags, ProtFlags,
-    UserfaultfdFlags,
+    SwapFlags, UserfaultfdFlags,
 };
 use crate::backend::c;
 #[cfg(target_pointer_width = "64")]
 use crate::backend::conv::loff_t_from_u64;
-use crate::backend::conv::{c_uint, no_fd, pass_usize, ret, ret_owned_fd, ret_void_star};
+use crate::backend::conv::{c_int, c_uint, no_fd, pass_usize, ret, ret_owned_fd, ret_void_star};
 use crate::fd::{BorrowedFd, OwnedFd};
 use crate::ffi::c_void;
+use crate::ffi::CStr;
 use crate::io;
 use linux_raw_sys::general::{MAP_ANONYMOUS, MREMAP_FIXED};
 
@@ -210,6 +211,16 @@ pub(crate) unsafe fn munlock(addr: *mut c_void, length: usize) -> io::Result<()>
 #[inline]
 pub(crate) unsafe fn userfaultfd(flags: UserfaultfdFlags) -> io::Result<OwnedFd> {
     ret_owned_fd(syscall_readonly!(__NR_userfaultfd, flags))
+}
+
+#[inline]
+pub(crate) fn swapon(path: &CStr, flags: SwapFlags) -> io::Result<()> {
+    unsafe { ret(syscall_readonly!(__NR_swapon, path, c_int(flags.bits()))) }
+}
+
+#[inline]
+pub(crate) fn swapoff(path: &CStr) -> io::Result<()> {
+    unsafe { ret(syscall_readonly!(__NR_swapoff, path)) }
 }
 
 /// Locks all pages mapped into the address space of the calling process.

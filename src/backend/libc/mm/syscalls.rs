@@ -8,8 +8,10 @@ use super::types::MlockAllFlags;
 use super::types::MremapFlags;
 use super::types::{MapFlags, MprotectFlags, MsyncFlags, ProtFlags};
 #[cfg(linux_kernel)]
-use super::types::{MlockFlags, UserfaultfdFlags};
+use super::types::{MlockFlags, SwapFlags, UserfaultfdFlags};
 use crate::backend::c;
+#[cfg(linux_kernel)]
+use crate::backend::conv::c_str;
 #[cfg(linux_kernel)]
 use crate::backend::conv::ret_owned_fd;
 use crate::backend::conv::{borrowed_fd, no_fd, ret};
@@ -211,6 +213,27 @@ pub(crate) unsafe fn mlock_with(
 #[inline]
 pub(crate) unsafe fn munlock(addr: *mut c::c_void, length: usize) -> io::Result<()> {
     ret(c::munlock(addr, length))
+}
+
+#[cfg(linux_kernel)]
+pub(crate) fn swapon(path: &crate::ffi::CStr, flags: SwapFlags) -> io::Result<()> {
+    syscall! {
+        fn swapon(
+            path: *const c::c_char,
+            swapflags: c::c_int
+        ) via SYS_swapon -> c::c_int
+    }
+    unsafe { ret(swapon(c_str(path), bitflags_bits!(flags))) }
+}
+
+#[cfg(linux_kernel)]
+pub(crate) fn swapoff(path: &crate::ffi::CStr) -> io::Result<()> {
+    syscall! {
+        fn swapoff(
+            path: *const c::c_char
+        ) via SYS_swapoff -> c::c_int
+    }
+    unsafe { ret(swapoff(c_str(path))) }
 }
 
 #[cfg(linux_kernel)]

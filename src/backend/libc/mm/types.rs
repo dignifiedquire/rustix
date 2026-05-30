@@ -504,3 +504,21 @@ bitflags! {
         const _ = !0;
     }
 }
+
+#[cfg(linux_kernel)]
+bitflags! {
+    /// `SWAP_FLAG_*` flags for use with [`swapon`].
+    ///
+    /// [`swapon`]: crate::mm::swapon
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+    pub struct SwapFlags: c::c_int {
+        /// `SWAP_FLAG_PREFER`
+        const PREFER = 0x8000;
+        /// `SWAP_FLAG_DISCARD`
+        const DISCARD = 0x10000;
+
+        /// <https://docs.rs/bitflags/*/bitflags/#externally-defined-flags>
+        const _ = !0;
+    }
+}
