@@ -463,6 +463,25 @@ pub unsafe fn execveat<Fd: AsFd>(
     backend::runtime::syscalls::execveat(dirfd.as_fd(), path, argv, envp, flags)
 }
 
+/// `execveat(fd, "", [""], [], AT_EMPTY_PATH | AT_EXECVE_CHECK)`—Check
+/// whether the kernel would execute the file `fd`, without executing it.
+///
+/// The kernel applies every check a real execution would (execute
+/// permission, `noexec` mounts, LSMs) and ignores the file format. Script
+/// interpreters call this before interpreting a file, and enforce the result
+/// when `SECBIT_EXEC_RESTRICT_FILE` is set (Linux 6.14).
+///
+/// # References
+///  - [Linux]
+///
+/// [Linux]: https://docs.kernel.org/userspace-api/check_exec.html
+#[inline]
+#[cfg(feature = "fs")]
+#[cfg_attr(docsrs, doc(cfg(feature = "fs")))]
+pub fn execveat_check<Fd: AsFd>(fd: Fd) -> io::Result<()> {
+    backend::runtime::syscalls::execveat_check(fd.as_fd())
+}
+
 /// `execve(path.as_c_str(), argv, envp)`—Execute a new command using the
 /// current process.
 ///

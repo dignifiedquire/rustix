@@ -96,6 +96,27 @@ pub(crate) unsafe fn execveat(
     ))
 }
 
+#[cfg(feature = "fs")]
+pub(crate) fn execveat_check(fd: BorrowedFd<'_>) -> io::Result<()> {
+    // A valid argument vector, as the kernel's `samples/check-exec/inc.c`
+    // passes; with `AT_EXECVE_CHECK` the kernel only checks the file and
+    // never replaces the process.
+    let args: [*const u8; 2] = [cstr!("").as_ptr().cast(), core::ptr::null()];
+    let env_vars: [*const u8; 1] = [core::ptr::null()];
+    let flags =
+        AtFlags::EMPTY_PATH | AtFlags::from_bits_retain(linux_raw_sys::general::AT_EXECVE_CHECK);
+    unsafe {
+        ret(syscall_readonly!(
+            __NR_execveat,
+            fd,
+            cstr!(""),
+            args.as_ptr(),
+            env_vars.as_ptr(),
+            flags
+        ))
+    }
+}
+
 pub(crate) unsafe fn execve(
     path: &CStr,
     args: *const *const u8,

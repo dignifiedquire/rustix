@@ -595,6 +595,21 @@ bitflags! {
         ///
         /// [`NO_CAP_AMBIENT_RAISE`]: Self::NO_CAP_AMBIENT_RAISE
         const NO_CAP_AMBIENT_RAISE_LOCKED = 1_u32 << 7;
+        /// Setting this flag asks script interpreters and dynamic linkers to
+        /// interpret or map a file only if `execveat(…, AT_EXECVE_CHECK)`
+        /// allows it (Linux 6.14).
+        const EXEC_RESTRICT_FILE = 1_u32 << 8;
+        /// Set [`EXEC_RESTRICT_FILE`] irreversibly.
+        ///
+        /// [`EXEC_RESTRICT_FILE`]: Self::EXEC_RESTRICT_FILE
+        const EXEC_RESTRICT_FILE_LOCKED = 1_u32 << 9;
+        /// Setting this flag asks script interpreters never to interpret
+        /// interactive user commands (Linux 6.14).
+        const EXEC_DENY_INTERACTIVE = 1_u32 << 10;
+        /// Set [`EXEC_DENY_INTERACTIVE`] irreversibly.
+        ///
+        /// [`EXEC_DENY_INTERACTIVE`]: Self::EXEC_DENY_INTERACTIVE
+        const EXEC_DENY_INTERACTIVE_LOCKED = 1_u32 << 11;
 
         /// <https://docs.rs/bitflags/*/bitflags/#externally-defined-flags>
         const _ = !0;
