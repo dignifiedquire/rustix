@@ -60,6 +60,24 @@ bitflags! {
     }
 }
 
+bitflags! {
+    /// `LANDLOCK_SCOPE_*` — IPC a ruleset confines to its own domain (and domains
+    /// nested in it). Needs Landlock ABI 6 (Linux 6.12).
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+    pub struct Scope: u64 {
+        /// `LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET` — connect only to abstract
+        /// `unix(7)` sockets created in the same or a nested domain.
+        const ABSTRACT_UNIX_SOCKET = linux_raw_sys::landlock::LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET as u64;
+        /// `LANDLOCK_SCOPE_SIGNAL` — send signals only to processes in the same
+        /// or a nested domain.
+        const SIGNAL = linux_raw_sys::landlock::LANDLOCK_SCOPE_SIGNAL as u64;
+
+        /// <https://docs.rs/bitflags/*/bitflags/#externally-defined-flags>
+        const _ = !0;
+    }
+}
+
 /// Query the kernel's supported Landlock ABI version (`>= 1`), via
 /// `landlock_create_ruleset(NULL, 0, LANDLOCK_CREATE_RULESET_VERSION)`. Returns
 /// `ENOSYS`/`EOPNOTSUPP` if Landlock is unavailable — use it to mask
@@ -74,20 +92,21 @@ pub fn abi_version() -> io::Result<i32> {
     syscalls::landlock_abi_version()
 }
 
-/// Create a Landlock ruleset governing `handled_access_fs`, returning its file
-/// descriptor. Add rules to it with [`add_path_beneath_rule`], then enforce it
-/// with [`restrict_self`].
+/// Create a Landlock ruleset governing `handled_access_fs` and confining the IPC
+/// in `scoped` to its own domain, returning its file descriptor. Add rules to it
+/// with [`add_path_beneath_rule`], then enforce it with [`restrict_self`]. A
+/// non-empty `scoped` fails with `EINVAL` below Landlock ABI 6.
 ///
 /// # References
 ///  - [`landlock_create_ruleset(2)`]
 ///
 /// [`landlock_create_ruleset(2)`]: https://man7.org/linux/man-pages/man2/landlock_create_ruleset.2.html
 #[inline]
-pub fn create_ruleset(handled_access_fs: AccessFs) -> io::Result<OwnedFd> {
+pub fn create_ruleset(handled_access_fs: AccessFs, scoped: Scope) -> io::Result<OwnedFd> {
     let attr = landlock_ruleset_attr {
         handled_access_fs: handled_access_fs.bits(),
         handled_access_net: 0,
-        scoped: 0,
+        scoped: scoped.bits(),
     };
     syscalls::landlock_create_ruleset(&attr, 0)
 }
