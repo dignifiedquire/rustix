@@ -73,7 +73,7 @@ pub fn add_key<Fd: AsFd>(fd: Fd, raw: &[u8]) -> io::Result<KeyIdentifier> {
     // SAFETY: FS_IOC_ADD_ENCRYPTION_KEY reads a `fscrypt_add_key_arg` followed by `raw_size` bytes of
     // key and writes the derived identifier into `key_spec.u`; `AddKey` is exactly that layout.
     let added = unsafe {
-        let ctl = ioctl::Updater::<{ op::FS_IOC_ADD_ENCRYPTION_KEY }, AddKey>::new(&mut arg);
+        let ctl = ioctl::Updater::<{ op::FS_IOC_ADD_ENCRYPTION_KEY as ioctl::Opcode }, AddKey>::new(&mut arg);
         ioctl::ioctl(fd, ctl)
     };
     // SAFETY: `identifier` is the union member the kernel writes for a key added by identifier.
@@ -113,10 +113,10 @@ pub fn remove_key<Fd: AsFd>(fd: Fd, id: &KeyIdentifier, all_users: bool) -> io::
     unsafe {
         if all_users {
             let ctl =
-                ioctl::Updater::<{ op::FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS }, g::fscrypt_remove_key_arg>::new(&mut arg);
+                ioctl::Updater::<{ op::FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS as ioctl::Opcode }, g::fscrypt_remove_key_arg>::new(&mut arg);
             ioctl::ioctl(fd, ctl)?;
         } else {
-            let ctl = ioctl::Updater::<{ op::FS_IOC_REMOVE_ENCRYPTION_KEY }, g::fscrypt_remove_key_arg>::new(&mut arg);
+            let ctl = ioctl::Updater::<{ op::FS_IOC_REMOVE_ENCRYPTION_KEY as ioctl::Opcode }, g::fscrypt_remove_key_arg>::new(&mut arg);
             ioctl::ioctl(fd, ctl)?;
         }
     }
@@ -143,7 +143,7 @@ pub fn key_status<Fd: AsFd>(fd: Fd, id: &KeyIdentifier) -> io::Result<KeyStatus>
     arg.key_spec = identifier_spec(id);
     // SAFETY: FS_IOC_GET_ENCRYPTION_KEY_STATUS reads and writes a `fscrypt_get_key_status_arg`.
     unsafe {
-        let ctl = ioctl::Updater::<{ op::FS_IOC_GET_ENCRYPTION_KEY_STATUS }, g::fscrypt_get_key_status_arg>::new(&mut arg);
+        let ctl = ioctl::Updater::<{ op::FS_IOC_GET_ENCRYPTION_KEY_STATUS as ioctl::Opcode }, g::fscrypt_get_key_status_arg>::new(&mut arg);
         ioctl::ioctl(fd, ctl)?;
     }
     match arg.status {
@@ -193,7 +193,7 @@ pub fn set_policy_v2<Fd: AsFd>(fd: Fd, policy: &PolicyV2) -> io::Result<()> {
     // SAFETY: FS_IOC_SET_ENCRYPTION_POLICY reads a policy whose first byte is its version; the kernel
     // copies the whole v2 struct when the version says v2.
     unsafe {
-        let ctl = ioctl::Setter::<{ op::FS_IOC_SET_ENCRYPTION_POLICY }, g::fscrypt_policy_v2>::new(raw);
+        let ctl = ioctl::Setter::<{ op::FS_IOC_SET_ENCRYPTION_POLICY as ioctl::Opcode }, g::fscrypt_policy_v2>::new(raw);
         ioctl::ioctl(fd, ctl)
     }
 }
@@ -208,7 +208,7 @@ pub fn get_policy<Fd: AsFd>(fd: Fd) -> io::Result<Option<Policy>> {
     // SAFETY: FS_IOC_GET_ENCRYPTION_POLICY_EX reads `policy_size` (the buffer's capacity) and writes
     // the policy and its size into a `fscrypt_get_policy_ex_arg`.
     let got = unsafe {
-        let ctl = ioctl::Updater::<{ op::FS_IOC_GET_ENCRYPTION_POLICY_EX }, g::fscrypt_get_policy_ex_arg>::new(&mut arg);
+        let ctl = ioctl::Updater::<{ op::FS_IOC_GET_ENCRYPTION_POLICY_EX as ioctl::Opcode }, g::fscrypt_get_policy_ex_arg>::new(&mut arg);
         ioctl::ioctl(fd, ctl)
     };
     match got {
