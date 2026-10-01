@@ -78,6 +78,38 @@ pub(crate) unsafe fn kernel_fork() -> io::Result<Fork> {
     })
 }
 
+/// `clone3` with `flags`, like `fork`: no new stack, `SIGCHLD` at exit (for nos, per-session
+/// namespaces).
+pub(crate) unsafe fn kernel_clone3(flags: u64) -> io::Result<Fork> {
+    let mut child_pid = MaybeUninit::<RawPid>::uninit();
+    // As in `kernel_fork`: `CLONE_CHILD_SETTID` stores the child's PID, as its own pid namespace
+    // sees it, in the child's copy of `child_pid`.
+    let args = linux_raw_sys::general::clone_args {
+        flags: flags | c::CLONE_CHILD_SETTID as u64,
+        pidfd: 0,
+        child_tid: child_pid.as_mut_ptr() as u64,
+        parent_tid: 0,
+        exit_signal: c::SIGCHLD as u64,
+        stack: 0,
+        stack_size: 0,
+        tls: 0,
+        set_tid: 0,
+        set_tid_size: 0,
+        cgroup: 0,
+    };
+    let pid = ret_c_int(syscall!(
+        __NR_clone3,
+        by_ref(&args),
+        size_of::<linux_raw_sys::general::clone_args, _>()
+    ))?;
+
+    Ok(if let Some(pid) = Pid::from_raw(pid) {
+        Fork::ParentOf(pid)
+    } else {
+        Fork::Child(Pid::from_raw_unchecked(child_pid.assume_init()))
+    })
+}
+
 #[cfg(feature = "fs")]
 pub(crate) unsafe fn execveat(
     dirfd: BorrowedFd<'_>,

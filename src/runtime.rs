@@ -420,6 +420,45 @@ pub unsafe fn kernel_fork() -> io::Result<Fork> {
     backend::runtime::syscalls::kernel_fork()
 }
 
+bitflags::bitflags! {
+    /// The namespaces a [`kernel_clone3`] child starts in, new (`CLONE_NEW*`).
+    #[repr(transparent)]
+    #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+    pub struct CloneNamespaces: u64 {
+        /// `CLONE_NEWNS`: a copy of the mount namespace.
+        const NEWNS = linux_raw_sys::general::CLONE_NEWNS as u64;
+        /// `CLONE_NEWPID`: a new pid namespace, in which the child is PID 1.
+        const NEWPID = linux_raw_sys::general::CLONE_NEWPID as u64;
+        /// `CLONE_NEWNET`: a new, empty network namespace.
+        const NEWNET = linux_raw_sys::general::CLONE_NEWNET as u64;
+        /// `CLONE_NEWIPC`: a new IPC namespace.
+        const NEWIPC = linux_raw_sys::general::CLONE_NEWIPC as u64;
+        /// `CLONE_NEWUTS`: a copy of the UTS namespace.
+        const NEWUTS = linux_raw_sys::general::CLONE_NEWUTS as u64;
+
+        /// <https://docs.rs/bitflags/*/bitflags/#externally-defined-flags>
+        const _ = !0;
+    }
+}
+
+/// `clone3(CLONE_NEW*)` — like [`kernel_fork`], but the child starts in new
+/// `namespaces`. With [`CloneNamespaces::NEWPID`] it is PID 1 of a new pid
+/// namespace; [`Fork::Child`] then holds 1. Creating namespaces needs
+/// `CAP_SYS_ADMIN` (or a user namespace).
+///
+/// # Safety
+///
+/// The same as [`kernel_fork`]: the child runs on a copy of the parent's
+/// address space and must not touch state another thread could have held.
+///
+/// # References
+///  - [Linux]
+///
+/// [Linux]: https://man7.org/linux/man-pages/man2/clone3.2.html
+pub unsafe fn kernel_clone3(namespaces: CloneNamespaces) -> io::Result<Fork> {
+    backend::runtime::syscalls::kernel_clone3(namespaces.bits())
+}
+
 /// Regular Unix `fork` doesn't tell the child its own PID because it assumes
 /// the child can just do `getpid`. That's true, but it's more fun if it
 /// doesn't have to.
