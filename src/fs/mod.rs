@@ -25,12 +25,12 @@ mod fcntl_apple;
 #[cfg(apple)]
 mod fcopyfile;
 pub(crate) mod fd;
+#[cfg(linux_raw_dep)]
+pub mod fscrypt;
 #[cfg(all(apple, feature = "alloc"))]
 mod getpath;
 #[cfg(not(target_os = "wasi"))] // WASI doesn't have get[gpu]id.
 mod id;
-#[cfg(linux_raw_dep)]
-pub mod fscrypt;
 #[cfg(linux_raw_dep)]
 pub mod inotify;
 #[cfg(linux_kernel)]

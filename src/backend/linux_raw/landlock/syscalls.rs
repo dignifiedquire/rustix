@@ -62,5 +62,11 @@ pub(crate) fn landlock_add_path_beneath_rule(
 
 #[inline]
 pub(crate) fn landlock_restrict_self(ruleset: BorrowedFd<'_>, flags: u32) -> io::Result<()> {
-    unsafe { ret(syscall!(__NR_landlock_restrict_self, ruleset, c_uint(flags))) }
+    unsafe {
+        ret(syscall!(
+            __NR_landlock_restrict_self,
+            ruleset,
+            c_uint(flags)
+        ))
+    }
 }
